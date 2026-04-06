@@ -1,0 +1,2055 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Crypto Tycoon: Ultimate Miner Pro</title>
+    
+    <!-- PWA / App Store / Google Play Optimization -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="CryptoTycoon">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#050507">
+    
+    <!-- Google Play / Android Specific -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="application-name" content="CryptoTycoon">
+    <link rel="icon" sizes="192x192" href="icon-192.png">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    
+    <!-- Notch / Safe Area Support -->
+    <meta name="format-detection" content="telephone=no">
+    <meta name="msapplication-tap-highlight" content="no">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #050507;
+            --card: rgba(25, 25, 30, 0.7);
+            --accent: #ffd700;
+            --eth: #627eea;
+            --btc: #f7931a;
+            --nft: #ff00ff;
+            --success: #4caf50;
+            --danger: #ff5a5a;
+            --text: #ffffff;
+            --text-dim: #999;
+            --font-display: 'Space Grotesk', sans-serif;
+            --radius: 20px;
+            --glass: blur(15px) saturate(180%);
+        }
+
+        * { 
+            margin: 0; 
+            padding: 0; 
+            box-sizing: border-box; 
+            font-family: var(--font-display); 
+            user-select: none; 
+            -webkit-tap-highlight-color: transparent; 
+            -webkit-touch-callout: none;
+            touch-action: manipulation;
+        }
+        body { background: var(--bg); color: var(--text); height: 100vh; display: flex; justify-content: center; overflow: hidden; }
+        
+        /* LOADING SCREEN */
+        #loading-screen {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: #050507;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.5s ease-out;
+        }
+        .loader {
+            width: 60px;
+            height: 60px;
+            border: 5px solid rgba(255, 215, 0, 0.1);
+            border-top: 5px solid var(--accent);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* LOGIN OVERLAY */
+        #login-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(5, 5, 7, 0.98);
+            backdrop-filter: blur(20px);
+            z-index: 9000;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            text-align: center;
+        }
+        .login-card {
+            background: var(--card);
+            padding: 30px;
+            border-radius: var(--radius);
+            border: 1px solid rgba(255, 215, 0, 0.3);
+            width: 100%;
+            max-width: 320px;
+        }
+        .login-input {
+            width: 100%;
+            padding: 15px;
+            background: rgba(0,0,0,0.4);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            color: #fff;
+            margin-bottom: 20px;
+            font-size: 16px;
+            text-align: center;
+        }
+        .login-btn {
+            width: 100%;
+            padding: 15px;
+            background: var(--accent);
+            color: #000;
+            border: none;
+            border-radius: 12px;
+            font-weight: 900;
+            cursor: pointer;
+            text-transform: uppercase;
+        }
+
+        /* SMALL FLOAT BUTTONS */
+        .float-btn-small {
+            position: absolute;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            cursor: pointer;
+            border: 2px solid rgba(255,255,255,0.2);
+            background: rgba(25, 25, 30, 0.8);
+            backdrop-filter: blur(10px);
+            transition: 0.2s;
+            color: #fff;
+            font-size: 14px;
+        }
+        .float-btn-small:active { transform: scale(0.9); }
+        #profile-btn { top: calc(20px + env(safe-area-inset-top)); left: 20px; }
+        #settings-btn { top: calc(20px + env(safe-area-inset-top)); left: 63px; }
+        #leaderboard-btn-top { top: calc(20px + env(safe-area-inset-top)); right: 63px; }
+        #stats-btn-top { top: calc(20px + env(safe-area-inset-top)); right: 20px; }
+
+        /* YELLOW LEADERBOARD BUTTON - REMOVED AS IT MOVED TOP */
+        #leaderboard-btn { display: none; }
+
+        /* PROFILE/SETTINGS MODALS */
+        .sub-modal {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.98);
+            backdrop-filter: blur(25px);
+            z-index: 3000;
+            display: none;
+            flex-direction: column;
+            padding: 60px 30px;
+        }
+        .input-group {
+            margin-bottom: 25px;
+            text-align: left;
+        }
+        .input-group label {
+            display: block;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-dim);
+            margin-bottom: 8px;
+        }
+        .input-group input {
+            width: 100%;
+            padding: 14px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            color: #fff;
+            font-size: 14px;
+        }
+        .setting-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        .toggle {
+            width: 50px;
+            height: 26px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 13px;
+            position: relative;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .toggle.on { background: var(--success); }
+        .toggle::after {
+            content: '';
+            position: absolute;
+            top: 3px; left: 3px;
+            width: 20px; height: 20px;
+            background: #fff;
+            border-radius: 50%;
+            transition: 0.3s;
+        }
+        .toggle.on::after { left: 27px; }
+
+        #game { 
+            width: 100%; 
+            max-width: 480px; 
+            height: 100%; 
+            display: flex; 
+            flex-direction: column; 
+            position: relative; 
+            background: #050507;
+            overflow: hidden;
+            /* Support for notch/safe areas */
+            padding-top: env(safe-area-inset-top);
+            padding-bottom: env(safe-area-inset-bottom);
+            padding-left: env(safe-area-inset-left);
+            padding-right: env(safe-area-inset-right);
+        }
+
+        /* COOL CRYPTO MATRIX BACKGROUND */
+        #bg-effect {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 0;
+            background: 
+                linear-gradient(rgba(5, 5, 7, 0.8), rgba(5, 5, 7, 0.8)),
+                repeating-linear-gradient(0deg, transparent 0, transparent 1px, rgba(0, 255, 0, 0.03) 1px, rgba(0, 255, 0, 0.03) 2px),
+                repeating-linear-gradient(90deg, transparent 0, transparent 1px, rgba(0, 255, 0, 0.03) 1px, rgba(0, 255, 0, 0.03) 2px);
+            background-size: 100% 100%, 20px 20px, 20px 20px;
+        }
+
+        #bg-effect::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle at 50% 50%, transparent 0%, #050507 80%);
+        }
+
+        /* HEADER (TOP UI BAR) */
+        header { 
+            margin: 20px; /* Matched to upgrade list padding */
+            padding: 10px; 
+            background: 
+                linear-gradient(180deg, rgba(15, 15, 19, 0.95) 0%, rgba(5, 5, 7, 0.95) 100%),
+                url('header-bg.jpg');
+            background-size: cover;
+            background-position: center;
+            border: 1px solid rgba(0, 255, 0, 0.2); 
+            text-align: center;
+            position: relative;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.5), inset 0 0 30px rgba(0, 255, 0, 0.05);
+            border-radius: var(--radius);
+            z-index: 100;
+            backdrop-filter: var(--glass);
+        }
+
+        .header-label {
+            display: none;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 12px;
+            margin-bottom: 14px;
+            border-radius: 999px;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
+            color: rgba(255,255,255,0.78);
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+        }
+        
+        #balance-display-area {
+            position: relative;
+            display: block;
+            width: 100%;
+            padding: 8px 10px 10px;
+            cursor: pointer;
+            border-radius: 16px;
+            transition: 0.15s;
+            background:
+                linear-gradient(180deg, rgba(0, 255, 0, 0.04), rgba(255,255,255,0.015)),
+                rgba(0,0,0,0.22);
+            border: 1px solid rgba(0, 255, 0, 0.12);
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.03), inset 0 0 30px rgba(0,255,0,0.03);
+        }
+        #balance-display-area:active { transform: scale(0.985); background: rgba(255,255,255,0.06); }
+
+        .balance-panel {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 6px;
+            text-align: left;
+        }
+        .balance-main {
+            min-width: 0;
+            flex: 1;
+        }
+        #balance { font-size: 42px; font-weight: 900; color: var(--accent); text-shadow: 0 0 30px rgba(255,215,0,0.3); line-height: 0.92; letter-spacing: -0.06em; }
+        .tap-hint { font-size: 8px; opacity: 0.38; margin-top: 2px; letter-spacing: 0.16em; text-transform: uppercase; text-align: left; }
+        .cps-inline {
+            display: flex;
+            align-items: baseline;
+            gap: 4px;
+            padding: 6px 8px;
+            border-radius: 12px;
+            background: rgba(0,0,0,0.34);
+            border: 1px solid rgba(76, 175, 80, 0.18);
+            flex-shrink: 0;
+            white-space: nowrap;
+        }
+        .cps-inline-label {
+            font-size: 9px;
+            color: rgba(255,255,255,0.45);
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+        }
+        #cps {
+            color: var(--success);
+            font-size: 13px;
+            font-weight: 800;
+            text-shadow: 0 0 10px rgba(76, 175, 80, 0.5);
+        }
+        .status-strip {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 6px;
+            margin-top: 6px;
+            text-align: left;
+            align-items: stretch;
+        }
+        .status-box {
+            min-width: 0;
+            padding: 5px 6px;
+            border-radius: 10px;
+            background: rgba(255,255,255,0.015);
+            border: 1px solid rgba(255,255,255,0.045);
+        }
+        .status-kicker {
+            font-size: 7px;
+            opacity: 0.48;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            margin-bottom: 2px;
+        }
+        .status-value {
+            font-size: 10px;
+            font-weight: 700;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .status-value.good {
+            color: var(--success);
+            text-shadow: 0 0 10px rgba(76, 175, 80, 0.35);
+        }
+        .status-value.bad {
+            color: var(--danger);
+            text-shadow: 0 0 10px rgba(255, 90, 90, 0.35);
+        }
+        
+        .level-badge {
+            position: absolute;
+            top: -7px;
+            right: -8px;
+            background: linear-gradient(135deg, #ffd700, #ff8800);
+            color: #000;
+            padding: 2px 8px;
+            border-radius: 8px;
+            font-size: 10px;
+            font-weight: 900;
+            box-shadow: 0 0 15px rgba(255,136,0,0.4);
+            border: 1px solid #fff;
+            transform: rotate(5deg);
+        }
+
+        .stats-top { 
+            display: flex; 
+            justify-content: center; 
+            gap: 6px;
+            margin-bottom: 6px; 
+            flex-wrap: wrap;
+        }
+        .pill { 
+            background: rgba(0,0,0,0.38); 
+            padding: 4px 8px; 
+            border-radius: 999px; 
+            font-size: 10px; 
+            font-weight: 800; 
+            border: 1px solid rgba(255,255,255,0.1);
+            color: #fff;
+        }
+        .pill.btc { border-color: var(--btc); text-shadow: 0 0 10px var(--btc); }
+        .pill.usd { border-color: var(--success); text-shadow: 0 0 10px var(--success); }
+        .progress-card {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            gap: 4px;
+        }
+        .progress-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 4px;
+            font-size: 7px;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: rgba(255,255,255,0.55);
+        }
+        .progress-mini {
+            width: 100%;
+            height: 8px;
+            background: rgba(0, 0, 0, 0.45);
+            border-radius: 999px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: inset 0 2px 8px rgba(0,0,0,0.7);
+            position: relative;
+        }
+
+        #level-progress-bar {
+            height: 100%;
+            width: 0%;
+            background: #00ff00;
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
+            transition: width 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            overflow: hidden;
+        }
+
+        #level-progress-bar::before {
+            content: '';
+            position: absolute;
+            top: 0; left: -100%; width: 50%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.6), transparent);
+            animation: scanline 2s infinite linear;
+            z-index: 2;
+        }
+
+        #level-progress-bar::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; height: 50%;
+            background: rgba(255,255,255,0.15);
+            border-radius: 8px 8px 0 0;
+            z-index: 1;
+        }
+
+        @keyframes scanline {
+            0% { left: -100%; }
+            100% { left: 200%; }
+        }
+
+        /* FLOATING BUTTONS */
+        .float-btn {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            cursor: pointer;
+            border: 2px solid #fff;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+            transition: 0.2s;
+            font-weight: 900;
+            color: #fff;
+            opacity: 0.7; /* 30% Transparent as requested */
+            pointer-events: auto;
+        }
+        .float-btn:active { transform: scale(0.9); opacity: 1; }
+        .float-btn * { pointer-events: none; } /* Prevents children from blocking clicks */
+
+        #stats-btn {
+            right: 25px;
+            bottom: 80px;
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            font-size: 16px;
+        }
+
+        #ad-btn {
+            right: 25px;
+            bottom: 135px; /* 80 + 55 = 135 */
+            background: linear-gradient(135deg, #00b09b, #96c93d);
+            display: none;
+        }
+        #ad-btn.visible { display: flex; }
+        #ad-btn.vibrate { animation: adVibrate 5s infinite; } /* Trigger every 5s */
+        .ad-icon { font-size: 16px; }
+        .ad-txt { font-size: 7px; margin-top: -1px; }
+
+        #surge-btn {
+            right: 25px;
+            bottom: 190px; /* 135 + 55 = 190 */
+            background: linear-gradient(135deg, #ff4444, #cc0000);
+            display: none;
+        }
+        #surge-btn.ready { display: flex; animation: surgePop 1s infinite; }
+
+        #bill-btn {
+            right: 25px;
+            bottom: 245px; /* 190 + 55 = 245 */
+            background: linear-gradient(135deg, #ffd700, #ff8800);
+            display: none;
+        }
+        #bill-btn.visible { display: flex; animation: billShake 2s infinite; }
+
+        @keyframes billShake {
+            0%, 90% { transform: scale(1) rotate(0); }
+            92% { transform: scale(1.1) rotate(5deg); }
+            94% { transform: scale(1.1) rotate(-5deg); }
+            96% { transform: scale(1.1) rotate(5deg); }
+            98% { transform: scale(1.1) rotate(-5deg); }
+            100% { transform: scale(1) rotate(0); }
+        }
+
+        @keyframes adVibrate {
+            0%, 90% { transform: scale(1) translate(0); }
+            92% { transform: scale(1.1) translate(-2px, 2px); }
+            94% { transform: scale(1.1) translate(-2px, -2px); }
+            96% { transform: scale(1.1) translate(2px, 2px); }
+            98% { transform: scale(1.1) translate(2px, -2px); }
+            100% { transform: scale(1) translate(0); }
+        }
+
+        /* LIST */
+        #scroll { 
+            flex: 1; 
+            overflow-y: auto; 
+            z-index: 1; 
+            -webkit-overflow-scrolling: touch;
+            overscroll-behavior: contain;
+        }
+        #scroll::-webkit-scrollbar { width: 0; }
+        #scroll-content { padding: 16px 20px 120px; display: flex; flex-direction: column; gap: 18px; }
+        .page { display: none; flex-direction: column; gap: 18px; min-height: 100%; }
+        .page.active { display: flex; }
+
+        .section-title {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            color: rgba(255,255,255,0.75);
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+        }
+        .card { background: var(--card); backdrop-filter: var(--glass); border-radius: var(--radius); padding: 16px; display: flex; flex-direction: column; gap: 15px; border: 1px solid rgba(255,255,255,0.08); transition: 0.2s; position: relative; }
+        .card:active { transform: scale(0.96); }
+        .card-head { display: flex; align-items: center; gap: 15px; }
+        .icon-box { width: 64px; height: 64px; background: rgba(255,255,255,0.05); border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 32px; box-shadow: inset 0 0 10px rgba(0,0,0,0.5); }
+        .info { flex: 1; }
+        .name { font-weight: 900; font-size: 20px; }
+        .lvl { font-size: 14px; color: var(--text-dim); font-weight: 700; margin-top: 4px; }
+        .inc { text-align: right; font-weight: 800; font-size: 20px; }
+        .progress-box { width: 100%; height: 28px; background: rgba(0,0,0,0.4); border-radius: 14px; overflow: hidden; position: relative; border: 1px solid rgba(255,255,255,0.05); }
+        .bar { height: 100%; width: 0; background: linear-gradient(90deg, #c5a000, #ffd700); transition: width 0.1s linear; }
+        .cost-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); font-size: 12px; font-weight: 900; text-shadow: 0 1px 3px #000; white-space: nowrap; }
+
+        .affordable { border-color: var(--accent); box-shadow: 0 0 20px rgba(255,215,0,0.15); }
+        .affordable::after { content: 'BUY'; position: absolute; right: 15px; top: 15px; background: var(--accent); color: #000; padding: 4px 10px; border-radius: 8px; font-size: 10px; font-weight: 900; }
+        .page-card {
+            background: var(--card);
+            border-radius: var(--radius);
+            border: 1px solid rgba(255,255,255,0.08);
+            padding: 18px;
+            backdrop-filter: var(--glass);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.18);
+        }
+        .page-title {
+            font-size: 22px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        .page-copy {
+            color: rgba(255,255,255,0.72);
+            line-height: 1.5;
+            font-size: 14px;
+        }
+        .tip-list, .leader-list {
+            display: grid;
+            gap: 12px;
+            margin-top: 12px;
+        }
+        .tip-item, .leader-item {
+            padding: 14px;
+            border-radius: 16px;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.07);
+        }
+        .tip-item strong, .leader-item strong {
+            display: block;
+            margin-bottom: 4px;
+            font-size: 13px;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+        .coming-soon {
+            display: grid;
+            place-items: center;
+            min-height: 220px;
+            text-align: center;
+            background:
+                linear-gradient(135deg, rgba(255,215,0,0.12), rgba(79,172,254,0.08)),
+                rgba(255,255,255,0.03);
+        }
+        .coming-soon span {
+            display: block;
+            color: rgba(255,255,255,0.72);
+            margin-top: 8px;
+            font-size: 14px;
+        }
+        .store-grid {
+            display: grid;
+            gap: 14px;
+        }
+        .store-card {
+            position: relative;
+            overflow: hidden;
+        }
+        .store-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(255,255,255,0.05), transparent 55%);
+            pointer-events: none;
+        }
+        .store-card-head {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            align-items: flex-start;
+            margin-bottom: 10px;
+        }
+        .store-card-name {
+            font-size: 18px;
+            font-weight: 700;
+        }
+        .store-card-meta {
+            font-size: 12px;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: rgba(255,255,255,0.6);
+            margin-top: 4px;
+        }
+        .store-badge {
+            padding: 8px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 700;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+        .store-status {
+            margin-top: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            font-size: 13px;
+        }
+        .store-status .good { color: var(--success); }
+        .store-status .bad { color: var(--danger); }
+        .buy-btn {
+            border: none;
+            border-radius: 12px;
+            padding: 10px 14px;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            background: linear-gradient(135deg, #ffd700, #ff9f1a);
+            color: #111;
+            cursor: pointer;
+        }
+        .buy-btn:disabled {
+            cursor: not-allowed;
+            opacity: 0.35;
+            filter: grayscale(0.3);
+        }
+        .store-summary {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+        .summary-box {
+            padding: 12px;
+            border-radius: 14px;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.07);
+        }
+        .summary-box strong {
+            display: block;
+            font-size: 11px;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: rgba(255,255,255,0.58);
+            margin-bottom: 4px;
+        }
+        .summary-box span {
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        /* UI ELEMENTS */
+        #mine-btn { position: absolute; bottom: 40px; left: 40px; width: 96px; height: 96px; background: var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 44px; z-index: 100; border: 6px solid rgba(0,0,0,0.1); box-shadow: 0 15px 40px rgba(255,215,0,0.4); cursor: pointer; transition: 0.1s; }
+        #mine-btn:active { transform: scale(0.8); }
+
+        @keyframes surgePop { 0%,100% { transform: scale(1); } 50% { transform: scale(1.15); } }
+        .surge-txt { font-size: 10px; font-weight: 900; }
+
+        #character { position: absolute; bottom: 0; right: -20px; height: 240px; pointer-events: none; z-index: 10; filter: drop-shadow(0 -10px 30px #000); }
+        .notif { position: absolute; top: 100px; left: 50%; transform: translateX(-50%); background: var(--accent); color: #000; padding: 15px 30px; border-radius: 15px; font-weight: 900; z-index: 1000; box-shadow: 0 10px 40px rgba(255,215,0,0.5); text-align: center; }
+
+        /* MODAL */
+        #modal { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); backdrop-filter: blur(20px); z-index: 2000; display: none; flex-direction: column; padding: 60px 30px; }
+        .modal-subtitle { color: rgba(255,255,255,0.6); text-transform: uppercase; letter-spacing: 0.18em; font-size: 11px; margin: -28px 0 28px; }
+        .stat { display: flex; justify-content: space-between; padding: 20px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .s-val { color: var(--accent); font-weight: 900; }
+        .close { background: var(--accent); color: #000; border: none; padding: 20px; border-radius: 15px; font-weight: 900; margin-top: auto; cursor: pointer; margin-bottom: 10px; }
+        .prestige-btn { background: linear-gradient(135deg, #4caf50, #b6ff75); color: #021205; border: none; padding: 16px; border-radius: 15px; font-weight: 900; cursor: pointer; font-size: 12px; margin-bottom: 10px; }
+        .prestige-btn:disabled { cursor: not-allowed; opacity: 0.35; filter: grayscale(0.2); }
+        .reset-btn { background: #ff4444; color: #fff; border: none; padding: 15px; border-radius: 15px; font-weight: 900; cursor: pointer; font-size: 12px; opacity: 0.6; transition: 0.2s; }
+        .reset-btn:hover { opacity: 1; background: #ff0000; }
+
+        body.surge #game::after { 
+            content: ''; 
+            position: absolute; 
+            top: 0; left: 0; 
+            width: 100%; height: 100%; 
+            box-shadow: inset 0 0 0 8px #ff4444; /* Use box-shadow for a perfect inner frame */
+            pointer-events: none; 
+            z-index: 500; 
+            animation: surgePulse 0.5s infinite; 
+        }
+        @keyframes surgePulse { 0%,100% { opacity: 0.2; } 50% { opacity: 1; } }
+        #bottom-nav {
+            position: absolute;
+            left: 20px;
+            right: 20px;
+            bottom: calc(16px + env(safe-area-inset-bottom));
+            z-index: 1200;
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+            padding: 8px;
+            background: rgba(9, 9, 14, 0.92);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 16px;
+            backdrop-filter: blur(16px);
+            box-shadow: 0 12px 24px rgba(0,0,0,0.28);
+        }
+        .nav-btn {
+            border: none;
+            border-radius: 12px;
+            background: transparent;
+            color: rgba(255,255,255,0.62);
+            padding: 6px 4px;
+            min-height: 46px;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 3px;
+            transition: 0.18s ease;
+        }
+        .nav-btn .nav-icon {
+            font-size: 13px;
+        }
+        .nav-btn.active {
+            color: #fff;
+            background: linear-gradient(180deg, rgba(255,215,0,0.18), rgba(255,215,0,0.05));
+            box-shadow: inset 0 0 0 1px rgba(255,215,0,0.25);
+        }
+    </style>
+</head>
+<body>
+
+<div id="loading-screen">
+    <div class="loader"></div>
+    <div style="color: var(--accent); font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; font-size: 14px;">Initializing Rig...</div>
+</div>
+
+<div id="login-overlay">
+    <div class="login-card">
+        <h2 style="color: var(--accent); margin-bottom: 10px;">WELCOME MINER</h2>
+        <p style="color: var(--text-dim); font-size: 12px; margin-bottom: 30px;">Enter your terminal ID to sync data</p>
+        <input type="text" id="login-username" class="login-input" placeholder="Username / Terminal ID">
+        <button class="login-btn" onclick="handleLogin()">Connect Terminal</button>
+    </div>
+</div>
+
+<div id="game">
+    <div id="bg-effect"></div>
+    <header>
+        <div class="header-label">Live Mining Feed</div>
+        <div class="stats-top">
+            <div class="pill" style="border-color: var(--accent); text-shadow: 0 0 10px rgba(255,215,0,0.6);">★ <span id="s-stars">0</span></div>
+            <div class="pill btc">₿ <span id="s-btc">0.000000</span></div>
+            <div class="pill usd">$ <span id="s-usd">0.00</span></div>
+        </div>
+        
+        <div id="balance-display-area" onclick="mine(event)">
+            <div class="level-badge" id="level-badge">LVL 1</div>
+            <div class="balance-panel">
+                <div class="balance-main">
+                    <div id="balance">0.000</div>
+                    <div class="tap-hint">Tap To Mine</div>
+                </div>
+                <div class="cps-inline">
+                    <span class="cps-inline-label">/sec</span>
+                    <span id="cps">+0.00</span>
+                </div>
+            </div>
+            <div class="status-strip">
+                <div class="status-box">
+                    <div class="status-kicker">Tap Power</div>
+                    <div class="status-value" id="tap-power-display">$1</div>
+                </div>
+                <div class="status-box">
+                    <div class="status-kicker">Power Bill</div>
+                    <div class="status-value" id="bill-status">Clear</div>
+                </div>
+                <div class="status-box">
+                    <div class="status-kicker">Boost</div>
+                    <div class="status-value" id="boost-status">Offline</div>
+                </div>
+                <div class="status-box progress-card">
+                    <div class="progress-head">
+                        <span id="level-progress-label">Next level</span>
+                        <span id="level-progress-value">0%</span>
+                    </div>
+                    <div class="progress-mini">
+                        <div id="level-progress-bar"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+    <div id="scroll">
+        <div id="scroll-content">
+            <section class="page active" id="page-mining">
+                <div class="section-title">
+                    <span>Upgrade Rack</span>
+                    <span>Buy more throughput</span>
+                </div>
+                <div id="assets-container"></div>
+            </section>
+
+            <section class="page" id="page-info">
+                <div class="page-card">
+                    <div class="page-title">Info</div>
+                    <div class="page-copy">Quick tips for climbing faster, surviving the bill cycle, and turning more runs into stars.</div>
+                    <div class="tip-list">
+                        <div class="tip-item"><strong>Buy Tap Power Early</strong>Fast early taps snowball your first unlocks much harder than sitting on cash.</div>
+                        <div class="tip-item"><strong>Prioritize CPS Breakpoints</strong>Grab the next rig when it noticeably increases your coins per second instead of spreading purchases too thin.</div>
+                        <div class="tip-item"><strong>Don't Ignore Bills</strong>Paying some of the bill early is better than waiting for a power cut. The power upgrades help a lot here.</div>
+                        <div class="tip-item"><strong>Use Boost Windows</strong>Trigger ad boost or surge right before a new production spike to squeeze more progress into the same timer.</div>
+                        <div class="tip-item"><strong>Loop For Stars</strong>Your true rank is stars. Once a run is stable, think about speed to level 10 instead of hoarding forever.</div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="page" id="page-shop">
+                <div class="page-card">
+                    <div class="page-title">Hardware Shop</div>
+                    <div class="page-copy">Permanent upgrades that persist across all runs.</div>
+                    
+                    <div class="store-grid" style="margin-top: 20px;">
+                        <div class="card affordable" onclick="buyShopItem('boost')">
+                            <div class="card-head">
+                                <div class="icon-box" style="border-bottom:4px solid #ff00ff">🚀</div>
+                                <div class="info">
+                                    <div class="name">PERMA-BOOST</div>
+                                    <div class="lvl">x1.5 Multiplier</div>
+                                </div>
+                            </div>
+                            <div class="progress-box">
+                                <div class="bar" style="background:#ff00ff;width:100%"></div>
+                                <div class="cost-text">Cost: 5 Stars</div>
+                            </div>
+                        </div>
+
+                        <div class="card affordable" onclick="buyShopItem('skin')">
+                            <div class="card-head">
+                                <div class="icon-box" style="border-bottom:4px solid #ffd700">👕</div>
+                                <div class="info">
+                                    <div class="name">GOLDEN RIG</div>
+                                    <div class="lvl">Visual Skin</div>
+                                </div>
+                            </div>
+                            <div class="progress-box">
+                                <div class="bar" style="background:#ffd700;width:100%"></div>
+                                <div class="cost-text">Cost: 10 Stars</div>
+                            </div>
+                        </div>
+
+                        <div class="card affordable" onclick="buyShopItem('bill_shield')">
+                            <div class="card-head">
+                                <div class="icon-box" style="border-bottom:4px solid #4caf50">🛡️</div>
+                                <div class="info">
+                                    <div class="name">BILL SHIELD</div>
+                                    <div class="lvl">-20% Bill Rate</div>
+                                </div>
+                            </div>
+                            <div class="progress-box">
+                                <div class="bar" style="background:#4caf50;width:100%"></div>
+                                <div class="cost-text">Cost: 25 Stars</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="page-card" style="margin-top: 20px; border: 1px solid var(--accent); background: linear-gradient(135deg, rgba(255,215,0,0.05), transparent);">
+                    <div class="page-title" style="color: var(--accent);">Premium Store 💎</div>
+                    <div class="page-copy">Exclusive bundles for serious miners. Directly supports development.</div>
+                    
+                    <div class="store-grid" style="margin-top: 20px;">
+                        <div class="card affordable" onclick="buyPremiumItem('starter_pack', 0.99)">
+                            <div class="card-head">
+                                <div class="icon-box" style="border-bottom:4px solid var(--accent)">📦</div>
+                                <div class="info">
+                                    <div class="name">STARTER PACK</div>
+                                    <div class="lvl">10 Stars + 2x Boost</div>
+                                </div>
+                            </div>
+                            <div class="progress-box" style="background: var(--accent);">
+                                <div class="cost-text" style="color: #000;">BUY FOR $0.99</div>
+                            </div>
+                        </div>
+
+                        <div class="card affordable" onclick="buyPremiumItem('pro_miner', 4.99)">
+                            <div class="card-head">
+                                <div class="icon-box" style="border-bottom:4px solid var(--eth)">💎</div>
+                                <div class="info">
+                                    <div class="name">PRO MINER BUNDLE</div>
+                                    <div class="lvl">50 Stars + Perma-Boost</div>
+                                </div>
+                            </div>
+                            <div class="progress-box" style="background: var(--eth);">
+                                <div class="cost-text" style="color: #fff;">BUY FOR $4.99</div>
+                            </div>
+                        </div>
+
+                        <div class="card affordable" onclick="buyPremiumItem('whale_pack', 19.99)">
+                            <div class="card-head">
+                                <div class="icon-box" style="border-bottom:4px solid var(--btc)">🐋</div>
+                                <div class="info">
+                                    <div class="name">WHALE INVESTOR</div>
+                                    <div class="lvl">250 Stars + No Bills</div>
+                                </div>
+                            </div>
+                            <div class="progress-box" style="background: var(--btc);">
+                                <div class="cost-text" style="color: #fff;">BUY FOR $19.99</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="page" id="page-leaderboard">
+                <div class="page-card">
+                    <div class="page-title">Leaderboard</div>
+                    <div class="page-copy">For now this is a local star board. Login and real rankings can plug into this later.</div>
+                    <div class="store-summary" style="margin-top: 14px;">
+                        <div class="summary-box">
+                            <strong>Your Stars</strong>
+                            <span id="leader-stars">0</span>
+                        </div>
+                        <div class="summary-box">
+                            <strong>Your Rank</strong>
+                            <span id="leader-rank">Rookie</span>
+                        </div>
+                    </div>
+                    <div class="leader-list">
+                        <div class="leader-item"><strong>Bronze Tier</strong>1-4 stars</div>
+                        <div class="leader-item"><strong>Silver Tier</strong>5-14 stars</div>
+                        <div class="leader-item"><strong>Gold Tier</strong>15-29 stars</div>
+                        <div class="leader-item"><strong>Diamond Tier</strong>30+ stars</div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="page" id="page-store">
+                <div class="page-card">
+                    <div class="page-title">Power Store</div>
+                    <div class="page-copy">Buy energy infrastructure that cuts how brutal each electricity bill feels during the current run.</div>
+                    <div class="store-summary" style="margin-top: 14px;">
+                        <div class="summary-box">
+                            <strong>Bill Reduction</strong>
+                            <span id="store-discount">0%</span>
+                        </div>
+                        <div class="summary-box">
+                            <strong>Bill Rate</strong>
+                            <span id="store-rate">50%</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="store-grid" id="power-store"></div>
+            </section>
+        </div>
+    </div>
+
+    <div id="profile-btn" class="float-btn-small" onclick="toggleSubModal('profile', true)">🤵</div>
+    <div id="settings-btn" class="float-btn-small" onclick="toggleSubModal('settings', true)">⚙️</div>
+    <div id="leaderboard-btn-top" class="float-btn-small" onclick="toggleSubModal('leaderboard', true)">🏆</div>
+    <div id="stats-btn-top" class="float-btn-small" onclick="toggleStats(true)">☰</div>
+
+    <!-- Hidden legacy buttons to prevent JS errors if referenced -->
+    <div id="leaderboard-btn" style="display:none;"></div>
+    <div id="stats-btn" style="display:none;"></div>
+
+    <div id="modal">
+        <h2 style="font-size: 32px; margin-bottom: 40px;">TERMINAL DATA</h2>
+        <div class="modal-subtitle">Run stats and reset controls</div>
+        <div class="stat"><span>Total Mined</span><span class="s-val" id="st-total">0</span></div>
+        <div class="stat"><span>Manual Clicks</span><span class="s-val" id="st-clicks">0</span></div>
+        <div class="stat"><span>Current Level</span><span class="s-val" id="st-level">1</span></div>
+        <div class="stat"><span>Stars Earned</span><span class="s-val" id="st-stars">0</span></div>
+        <div class="stat"><span>Prestige Bonus</span><span class="s-val" id="st-bonus">+0%</span></div>
+        <div class="stat"><span>Outstanding Bill</span><span class="s-val" id="st-bill">0</span></div>
+        <div class="stat"><span>Ad Boost</span><span class="s-val" id="st-boost">Offline</span></div>
+        <button class="close" onclick="toggleStats(false)">BACK TO MINING</button>
+        <button class="prestige-btn" id="prestige-btn" onclick="prestige()">PRESTIGE FOR +25%</button>
+        <button class="reset-btn" onclick="hardReset()">HARD RESET GAME</button>
+    </div>
+
+    <!-- PROFILE MODAL -->
+    <div id="profile-modal" class="sub-modal">
+        <h2 style="font-size: 32px; margin-bottom: 10px;">MINER PROFILE</h2>
+        <p style="color: var(--text-dim); margin-bottom: 40px;">Manage your identity and rewards</p>
+        
+        <div class="input-group">
+            <label>Miner Nickname</label>
+            <input type="text" id="prof-nickname" placeholder="Enter Nickname..." onchange="saveProfile()">
+        </div>
+
+        <div class="input-group">
+            <label>USDT Address (BSC Network)</label>
+            <input type="text" id="prof-usdt" placeholder="0x..." onchange="saveProfile()">
+            <p style="font-size: 10px; color: var(--text-dim); margin-top: 8px;">Used for distributing seasonal prize pool rewards.</p>
+        </div>
+
+        <button class="close" style="margin-top: auto;" onclick="toggleSubModal('profile', false)">SAVE & CLOSE</button>
+    </div>
+
+    <!-- SETTINGS MODAL -->
+    <div id="settings-modal" class="sub-modal">
+        <h2 style="font-size: 32px; margin-bottom: 10px;">SETTINGS</h2>
+        <p style="color: var(--text-dim); margin-bottom: 40px;">Terminal configuration</p>
+        
+        <div class="setting-item">
+            <div>
+                <div style="font-weight: 700;">Game Sounds</div>
+                <div style="font-size: 12px; color: var(--text-dim);">Toggle sfx and feedback</div>
+            </div>
+            <div id="setting-sound" class="toggle on" onclick="toggleSetting('sound')"></div>
+        </div>
+
+        <div class="setting-item">
+            <div>
+                <div style="font-weight: 700;">Haptic Feedback</div>
+                <div style="font-size: 12px; color: var(--text-dim);">Vibrate on critical taps</div>
+            </div>
+            <div id="setting-haptic" class="toggle on" onclick="toggleSetting('haptic')"></div>
+        </div>
+
+        <div class="setting-item">
+            <div>
+                <div style="font-weight: 700;">Power Notifications</div>
+                <div style="font-size: 12px; color: var(--text-dim);">Alert when bills arrive</div>
+            </div>
+            <div id="setting-notif" class="toggle on" onclick="toggleSetting('notif')"></div>
+        </div>
+
+        <button class="close" style="margin-top: auto;" onclick="toggleSubModal('settings', false)">CLOSE SETTINGS</button>
+    </div>
+
+    <!-- LEADERBOARD MODAL -->
+    <div id="leaderboard-modal" class="sub-modal">
+        <h2 style="font-size: 32px; margin-bottom: 10px;">🏆 GLOBAL RANKS</h2>
+        <p style="color: var(--text-dim); margin-bottom: 30px;">Top miners sorted by total Stars</p>
+        
+        <div id="global-leaderboard-list" class="leader-list" style="overflow-y: auto; flex: 1; margin-bottom: 20px;">
+            <!-- Will be populated by JS -->
+        </div>
+
+        <button class="close" onclick="toggleSubModal('leaderboard', false)">BACK TO WORK</button>
+    </div>
+
+    <div id="ad-btn" class="float-btn" onclick="watchAd()">
+        <span class="ad-icon">▶️</span>
+        <span class="ad-txt">2X BOOST</span>
+    </div>
+
+    <div id="surge-btn" class="float-btn" onclick="surge()">
+        <span style="font-size: 28px;">⚡</span>
+        <span class="surge-txt" id="surge-timer">SURGE</span>
+    </div>
+
+    <div id="bill-btn" class="float-btn" onclick="payBill()">
+        <span style="font-size: 24px;">🔌</span>
+        <span class="ad-txt">PAY BILL</span>
+    </div>
+
+    <nav id="bottom-nav">
+        <button class="nav-btn active" data-tab="mining" onclick="switchTab('mining')"><span class="nav-icon">⛏</span><span>Mining</span></button>
+        <button class="nav-btn" data-tab="info" onclick="switchTab('info')"><span class="nav-icon">i</span><span>Info</span></button>
+        <button class="nav-btn" data-tab="shop" onclick="switchTab('shop')"><span class="nav-icon">+</span><span>Shop</span></button>
+        <button class="nav-btn" data-tab="leaderboard" onclick="switchTab('leaderboard')"><span class="nav-icon">★</span><span>Ranks</span></button>
+        <button class="nav-btn" data-tab="store" onclick="switchTab('store')"><span class="nav-icon">⚡</span><span>Investments</span></button>
+    </nav>
+</div>
+
+<script>
+    const ASSETS = [
+        { id: 'eth', n: 'ETH RIG', i: '💎', c: 10, inc: 0.8, col: '#627eea', t: 2000 },
+        { id: 'btc', n: 'BTC MINER', i: '₿', c: 150, inc: 10, col: '#f7931a', t: 3000 },
+        { id: 'nft', n: 'NFT DROP', i: '🖼️', c: 1200, inc: 50, col: '#ff00ff', t: 5000 },
+        { id: 'farm', n: 'HASH FARM', i: '🏭', c: 15000, inc: 300, col: '#4caf50', t: 8000 },
+        { id: 'wall', n: 'DEFI WALLET', i: '💼', c: 80000, inc: 1500, col: '#2196f3', t: 12000 },
+        { id: 'chain', n: 'L1 CHAIN', i: '⛓️', c: 500000, inc: 10000, col: '#9c27b0', t: 20000 },
+        { id: 'ai', n: 'AI AGENT', i: '🤖', c: 2500000, inc: 60000, col: '#ff9800', t: 30000 }
+    ];
+
+    const SUFFIX = ['', 'K', 'M', 'B', 'T', 'Q', 'Qu', 'Sx', 'Sp', 'Oc', 'No', 'Dc', 'UDc', 'DDc', 'TDc', 'QDc', 'QuDc', 'SxDc', 'SpDc', 'ODc', 'NDc', 'Vg'];
+    
+    // LEVEL CONFIGURATION
+    const LEVELS = [
+        { req: 25000 },
+        { req: 150000 },
+        { req: 1000000 },
+        { req: 10000000 },
+        { req: 50000000 },
+        { req: 250000000 },
+        { req: 1000000000 },
+        { req: 5000000000 },
+        { req: 25000000000 },
+        { req: 100000000000 }
+    ];
+    const POWER_UPGRADES = [
+        { id: 'wind', name: 'Wind Mills', icon: '🌬', reduction: 0.05, cost: 200000, blurb: 'Steady renewable output for a gentler bill cycle.' },
+        { id: 'solar', name: 'Solar Charging', icon: '☀', reduction: 0.10, cost: 2500000, blurb: 'Store daytime energy and shave more off each invoice.' },
+        { id: 'nuclear', name: 'Nuclear Plant', icon: '☢', reduction: 0.25, cost: 25000000, blurb: 'Big infrastructure, big relief. Your bill rate drops hard.' }
+    ];
+
+    let g = { 
+        b: 0, te: 0, cl: 0, pr: 0, res: 0, as: {}, 
+        sa: false, sd: 0, sc: 0, ach: [],
+        lvl: 1, lte: 0, // lte = earnings in current level
+        stars: 0,
+        pwr: {},
+        ab: false, abd: 0, // ad boost
+        clvl: 0, // Click Upgrade Level
+        bt: 300, // 5-min window timer
+        be: 0, // current window earnings
+        bd: 0, // accumulated debt (50% of each window)
+        bo: 0, // original amount owed for active unpaid bills
+        ut: 0, // unpaid time (starts counting when bd > 0)
+        lt: Date.now(), // last timestamp for offline progress
+        // New features
+        user: '', // Username
+        nickname: '',
+        usdt: '', // BSC Address
+        settings: { sound: true, haptic: true, notif: true },
+        shop: { boost: 1, skin: 'default', shield: 0 }
+    };
+    ASSETS.forEach(a => g.as[a.id] = { l: 0, p: 0 });
+    POWER_UPGRADES.forEach(p => g.pwr[p.id] = false);
+    let currentTab = 'mining';
+
+    let audio;
+    function play(f, d=0.1, t='sine', v=0.1) {
+        if(!g.settings.sound) return;
+        try {
+            if(!audio) audio = new (window.AudioContext || window.webkitAudioContext)();
+            if(audio.state === 'suspended') audio.resume();
+            const o = audio.createOscillator(); const gain = audio.createGain();
+            o.type = t; o.frequency.setValueAtTime(f, audio.currentTime);
+            o.frequency.exponentialRampToValueAtTime(f/2, audio.currentTime+d);
+            gain.gain.setValueAtTime(v, audio.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audio.currentTime+d);
+            o.connect(gain); gain.connect(audio.destination);
+            o.start(); o.stop(audio.currentTime+d);
+        } catch(e){}
+    }
+
+    function particle(x, y, col='#ffd700') {
+        const p = document.createElement('div');
+        p.style.cssText = `position:absolute;left:${x}px;top:${y}px;width:10px;height:10px;background:${col};border-radius:50%;z-index:1000;pointer-events:none;`;
+        document.getElementById('game').appendChild(p);
+        const ang = Math.random()*Math.PI*2; const dist = 50+Math.random()*50;
+        p.animate([{transform:'translate(0,0) scale(1)',opacity:1},{transform:`translate(${Math.cos(ang)*dist}px,${Math.sin(ang)*dist}px) scale(0)`,opacity:0}], {duration:600,easing:'ease-out'}).onfinish=()=>p.remove();
+    }
+
+    function float(x, y, txt, col='#ffd700', dur=1000) {
+        const el = document.createElement('div'); el.textContent = txt;
+        el.style.cssText = `position:absolute;left:${x}px;top:${y}px;color:${col};font-weight:900;font-size:28px;z-index:1000;pointer-events:none;text-shadow:0 3px 15px rgba(0,0,0,0.5);`;
+        document.getElementById('game').appendChild(el);
+        el.animate([{transform:'translate(-50%,0) scale(0.6)',opacity:0},{transform:'translate(-50%,-150px) scale(1.2)',opacity:1,offset:0.2},{transform:'translate(-50%,-250px) scale(1)',opacity:0}], {duration:dur}).onfinish=()=>el.remove();
+    }
+
+    function toggleSubModal(type, show) {
+        const modal = document.getElementById(`${type}-modal`);
+        if (!modal) return;
+        modal.style.display = show ? 'flex' : 'none';
+        if (show && type === 'leaderboard') updateLeaderboard();
+        if (show && type === 'profile') {
+            document.getElementById('prof-nickname').value = g.nickname || '';
+            document.getElementById('prof-usdt').value = g.usdt || '';
+        }
+        if (show && type === 'settings') {
+            ['sound', 'haptic', 'notif'].forEach(s => {
+                document.getElementById(`setting-${s}`).classList.toggle('on', g.settings[s]);
+            });
+        }
+    }
+
+    function saveProfile() {
+        g.nickname = document.getElementById('prof-nickname').value;
+        g.usdt = document.getElementById('prof-usdt').value;
+        saveGame();
+    }
+
+    function toggleSetting(s) {
+        g.settings[s] = !g.settings[s];
+        document.getElementById(`setting-${s}`).classList.toggle('on', g.settings[s]);
+        saveGame();
+    }
+
+    function handleLogin() {
+        const user = document.getElementById('login-username').value.trim();
+        if (user.length < 3) {
+            alert("Terminal ID too short!");
+            return;
+        }
+        g.user = user;
+        document.getElementById('login-overlay').style.display = 'none';
+        saveGame();
+    }
+
+    function updateLeaderboard() {
+        const list = document.getElementById('global-leaderboard-list');
+        list.innerHTML = '';
+        
+        // Only show real miners (just the current user for now)
+        const realMiners = [
+            { name: g.nickname || g.user || 'You', stars: g.stars, isYou: true }
+        ].sort((a, b) => b.stars - a.stars);
+
+        realMiners.forEach((entry, i) => {
+            const item = document.createElement('div');
+            item.className = 'leader-item';
+            if (entry.isYou) item.style.borderColor = 'var(--accent)';
+            item.innerHTML = `
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <div>
+                        <span style="color:var(--accent); font-weight:900; margin-right:10px;">#${i+1}</span>
+                        <strong style="display:inline;">${entry.name}</strong>
+                    </div>
+                    <span style="color:var(--accent); font-weight:900;">${entry.stars} ★</span>
+                </div>
+            `;
+            list.appendChild(item);
+        });
+    }
+
+    function buyShopItem(id) {
+        const costs = { boost: 5, skin: 10, bill_shield: 25 };
+        const cost = costs[id];
+        if (g.stars < cost) {
+            float(window.innerWidth/2, window.innerHeight/2, "NOT ENOUGH STARS!", "#ff4444", 2000);
+            return;
+        }
+
+        if (id === 'boost' && g.shop.boost >= 1.5) {
+            alert("Already maxed!"); return;
+        }
+        if (id === 'bill_shield' && g.shop.shield >= 0.2) {
+            alert("Already maxed!"); return;
+        }
+
+        g.stars -= cost;
+        if (id === 'boost') g.shop.boost = 1.5;
+        if (id === 'skin') g.shop.skin = 'golden';
+        if (id === 'bill_shield') g.shop.shield = 0.2;
+        
+        play(1200, 0.5, 'sine', 0.2);
+        float(window.innerWidth/2, window.innerHeight/2, "UPGRADE PURCHASED!", "var(--success)");
+        update();
+        saveGame();
+    }
+
+    function buyPremiumItem(id, price) {
+        // This is where real payment logic (Google Play Billing) would go.
+        // For now, we simulate a successful transaction for demonstration.
+        const confirmed = confirm(`Proceed to buy ${id.replace('_', ' ').toUpperCase()} for $${price}?`);
+        if (!confirmed) return;
+
+        play(1500, 1.2, 'sine', 0.35);
+        
+        if (id === 'starter_pack') {
+            g.stars += 10;
+            g.ab = true;
+            g.abd = 600; // 10 minutes 2x
+            float(window.innerWidth/2, window.innerHeight/2, "STARTER PACK ACTIVATED! 📦", "var(--accent)", 2500);
+        } else if (id === 'pro_miner') {
+            g.stars += 50;
+            g.shop.boost = 2.0;
+            float(window.innerWidth/2, window.innerHeight/2, "PRO MINER ACTIVE! 💎", "var(--eth)", 2500);
+        } else if (id === 'whale_pack') {
+            g.stars += 250;
+            g.shop.shield = 1.0; // 100% Bill Reduction
+            float(window.innerWidth/2, window.innerHeight/2, "WHALE INVESTOR MODE! 🐋", "var(--btc)", 2500);
+        }
+
+        update();
+        saveGame();
+    }
+
+    function fmtParts(n) {
+        const absN = Math.abs(n);
+        if (absN < 1000000) return { v: n.toLocaleString('en-US', { maximumFractionDigits: 0 }), s: 'COINS' };
+        
+        const e = Math.floor(Math.log10(absN) / 3);
+        const sIndex = Math.min(e, SUFFIX.length - 1);
+        const val = n / Math.pow(10, sIndex * 3);
+        
+        // Show more precision for larger numbers, but keep it clean
+        let formattedVal;
+        if (Math.abs(val) >= 100) formattedVal = val.toFixed(1);
+        else if (Math.abs(val) >= 10) formattedVal = val.toFixed(2);
+        else formattedVal = val.toFixed(3);
+        
+        return { v: formattedVal, s: SUFFIX[sIndex] };
+    }
+
+    function fmt(n) { const p = fmtParts(n); return p.v + (p.s !== 'COINS' ? ' ' + p.s : ''); }
+    function cost(id) { return ASSETS.find(a=>a.id===id).c * Math.pow(1.6, g.as[id].l); }
+    function inc(id) {
+        const a = ASSETS.find(x=>x.id===id); if(g.as[id].l === 0) return 0;
+        let m = (1 + g.pr * 0.25) * (1 + g.res * 0.15) * g.shop.boost; 
+        if(g.sa) m *= 3;
+        if(g.ab) m *= 2; // AD BOOST
+        return a.inc * g.as[id].l * m;
+    }
+
+    function cps() { return ASSETS.reduce((s,a) => s + (inc(a.id)/(a.t/1000)), 0); }
+
+    function getClickCost() { return 50 * Math.pow(1.8, g.clvl); }
+    function getClickPower() { return (1 + g.clvl * 2) * (1 + g.pr * 0.6); }
+    function getBillReduction() {
+        return POWER_UPGRADES.reduce((sum, upgrade) => sum + (g.pwr[upgrade.id] ? upgrade.reduction : 0), 0);
+    }
+    function getBillRate() {
+        return Math.max(0.05, 0.5 * (1 - getBillReduction()) * (1 - g.shop.shield));
+    }
+    function getRankLabel() {
+        if (g.stars >= 30) return 'Diamond';
+        if (g.stars >= 15) return 'Gold';
+        if (g.stars >= 5) return 'Silver';
+        if (g.stars >= 1) return 'Bronze';
+        return 'Rookie';
+    }
+    function switchTab(tab) {
+        currentTab = tab;
+        document.querySelectorAll('.page').forEach(page => {
+            page.classList.toggle('active', page.id === `page-${tab}`);
+        });
+        document.querySelectorAll('.nav-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.tab === tab);
+        });
+        const miningOnly = tab === 'mining';
+        ['stats-btn-top', 'ad-btn', 'surge-btn', 'bill-btn', 'profile-btn', 'settings-btn', 'leaderboard-btn-top'].forEach(id => {
+            const el = document.getElementById(id);
+            if (!el) return;
+            if (!miningOnly) {
+                el.style.display = 'none';
+            } else if (id === 'stats-btn-top' || id === 'profile-btn' || id === 'settings-btn' || id === 'leaderboard-btn-top') {
+                el.style.display = 'flex';
+            } else {
+                el.style.display = '';
+            }
+        });
+        update();
+    }
+    function createPowerStore() {
+        const container = document.getElementById('power-store');
+        if (!container) return;
+        container.innerHTML = '';
+        POWER_UPGRADES.forEach(upgrade => {
+            const card = document.createElement('div');
+            card.className = 'page-card store-card';
+            card.id = `power-${upgrade.id}`;
+            card.innerHTML = `
+                <div class="store-card-head">
+                    <div>
+                        <div class="store-card-name">${upgrade.icon} ${upgrade.name}</div>
+                        <div class="store-card-meta">Bill reduction ${Math.round(upgrade.reduction * 100)}%</div>
+                    </div>
+                    <div class="store-badge" id="power-badge-${upgrade.id}">Offline</div>
+                </div>
+                <div class="page-copy">${upgrade.blurb}</div>
+                <div class="store-status">
+                    <span id="power-cost-${upgrade.id}">Cost: $${fmt(upgrade.cost)}</span>
+                    <button class="buy-btn" id="power-buy-${upgrade.id}" onclick="buyPower('${upgrade.id}')">Buy</button>
+                </div>
+            `;
+            container.appendChild(card);
+        });
+    }
+    function buyPower(id) {
+        const upgrade = POWER_UPGRADES.find(item => item.id === id);
+        if (!upgrade || g.pwr[id] || g.b < upgrade.cost) return;
+        g.b -= upgrade.cost;
+        g.pwr[id] = true;
+        play(900, 0.35, 'triangle', 0.18);
+        float(window.innerWidth / 2, window.innerHeight / 2, `${upgrade.name.toUpperCase()} ONLINE`, '#4caf50', 1800);
+        update();
+    }
+    function resetRunState() {
+        g.b = 0;
+        g.te = 0;
+        g.cl = 0;
+        g.res = 0;
+        g.sa = false;
+        g.sd = 0;
+        g.sc = 0;
+        g.ach = [];
+        g.lvl = 1;
+        g.lte = 0;
+        g.ab = false;
+        g.abd = 0;
+        g.clvl = 0;
+        g.bt = 300;
+        g.be = 0;
+        g.bd = 0;
+        g.bo = 0;
+        g.ut = 0;
+        ASSETS.forEach(a => g.as[a.id] = { l: 0, p: 0 });
+        POWER_UPGRADES.forEach(p => g.pwr[p.id] = false);
+        lastBillState = -1;
+    }
+    function completeStarRun() {
+        g.stars++;
+        play(1600, 1.2, 'sine', 0.35);
+        float(window.innerWidth/2, window.innerHeight/2, `STAR SECURED! TOTAL ${g.stars}`, '#ffd700', 2400);
+        resetRunState();
+        create();
+        update();
+    }
+    function billStateLabel() {
+        if (g.bd <= 0) return 'Clear';
+        if (g.ut >= 3600) return 'Power Cut';
+        const remainingPct = g.bo > 0 ? Math.round((g.bd / g.bo) * 100) : 100;
+        return `Unpaid ${remainingPct}%`;
+    }
+
+    function update() {
+        if (g.shop.skin === 'golden') {
+            document.documentElement.style.setProperty('--accent', '#fff200');
+            document.getElementById('balance').style.textShadow = '0 0 40px rgba(255,242,0,0.5)';
+        }
+
+        const p = fmtParts(g.b);
+        const balEl = document.getElementById('balance');
+        
+        // Auto-scale font size if number gets too long
+        if (p.v.length > 8) balEl.style.fontSize = '40px';
+        else if (p.v.length > 6) balEl.style.fontSize = '46px';
+        else balEl.style.fontSize = '52px';
+
+        // Integrate suffix (K, M, B, etc.) into balance if it's not "COINS"
+        const suffixHtml = p.s !== 'COINS' ? `<span style="font-size: 0.4em; color: var(--text-dim); margin-left: 5px;">${p.s}</span>` : '';
+        balEl.innerHTML = p.v + suffixHtml;
+
+        document.getElementById('s-stars').textContent = g.stars;
+        document.getElementById('s-usd').textContent = fmt(g.b * 0.9);
+        document.getElementById('s-btc').textContent = (g.b / 60000).toFixed(6);
+        document.getElementById('cps').textContent = `+${fmt(cps())}`;
+        document.getElementById('tap-power-display').textContent = `$${fmt(getClickPower())}`;
+        const billStatusEl = document.getElementById('bill-status');
+        const boostStatusEl = document.getElementById('boost-status');
+        const billIsGood = g.bd <= 0;
+        const boostIsGood = g.sa || g.ab;
+        billStatusEl.textContent = billStateLabel();
+        boostStatusEl.textContent = g.sa ? 'Surging' : (g.ab ? `${Math.ceil(g.abd)}s x2` : 'Offline');
+        billStatusEl.className = `status-value ${billIsGood ? 'good' : 'bad'}`;
+        boostStatusEl.className = `status-value ${boostIsGood ? 'good' : 'bad'}`;
+        document.getElementById('leader-stars').textContent = g.stars;
+        document.getElementById('leader-rank').textContent = getRankLabel();
+        document.getElementById('store-discount').textContent = `${Math.round(getBillReduction() * 100)}%`;
+        document.getElementById('store-rate').textContent = `${Math.round(getBillRate() * 100)}%`;
+
+        // Update Level UI
+        const currentReq = LEVELS[g.lvl-1].req;
+        const prog = Math.min(100, (g.lte / currentReq) * 100);
+        document.getElementById('level-progress-bar').style.width = prog + '%';
+        document.getElementById('level-badge').textContent = `LVL ${g.lvl}`;
+        document.getElementById('level-progress-label').textContent = g.lvl === LEVELS.length ? `Star $${fmt(currentReq)}` : `Lvl $${fmt(currentReq)}`;
+        document.getElementById('level-progress-value').textContent = `${Math.floor(prog)}%`;
+
+        // Update Ad UI
+        const adBtn = document.getElementById('ad-btn');
+        if (g.ab) {
+            adBtn.classList.remove('visible', 'vibrate');
+        } else {
+            adBtn.classList.add('visible', 'vibrate');
+        }
+
+        const rCard = document.getElementById('res-card');
+        if(rCard) {
+            const c = 1000 * Math.pow(6, g.res);
+            document.getElementById('res-lvl').textContent = `Lvl ${g.res}`;
+            document.getElementById('res-cost').textContent = `Cost: ${fmt(c)}`;
+            rCard.classList.toggle('affordable', g.b >= c);
+        }
+
+        // Update Click Card
+        const cCard = document.getElementById('click-card');
+        if(cCard) {
+            const cost = getClickCost();
+            document.getElementById('click-lvl').textContent = `Lvl ${g.clvl}`;
+            document.getElementById('click-power').textContent = `+$${fmt(getClickPower())}`;
+            document.getElementById('click-cost').textContent = `Cost: ${fmt(cost)}`;
+            cCard.classList.toggle('affordable', g.b >= cost);
+        }
+
+        ASSETS.forEach(a => {
+            const card = document.getElementById(`card-${a.id}`); if(!card) return;
+            const c = cost(a.id);
+            document.getElementById(`lvl-${a.id}`).textContent = `x${g.as[a.id].l}`;
+            document.getElementById(`inc-${a.id}`).textContent = fmt(inc(a.id));
+            document.getElementById(`cost-${a.id}`).textContent = (g.as[a.id].l === 0 ? 'Unlock: ' : 'Upgrade: ') + fmt(c);
+            card.classList.toggle('affordable', g.b >= c);
+        });
+
+        POWER_UPGRADES.forEach(upgrade => {
+            const badge = document.getElementById(`power-badge-${upgrade.id}`);
+            const costLabel = document.getElementById(`power-cost-${upgrade.id}`);
+            const buyBtn = document.getElementById(`power-buy-${upgrade.id}`);
+            const card = document.getElementById(`power-${upgrade.id}`);
+            if (!badge || !costLabel || !buyBtn || !card) return;
+            const owned = g.pwr[upgrade.id];
+            badge.textContent = owned ? 'Online' : `${Math.round(upgrade.reduction * 100)}% cut`;
+            badge.style.color = owned ? 'var(--success)' : 'var(--text)';
+            buyBtn.disabled = owned || g.b < upgrade.cost;
+            buyBtn.textContent = owned ? 'Installed' : 'Buy';
+            costLabel.textContent = owned ? 'Installed for this run' : `Cost: $${fmt(upgrade.cost)}`;
+            card.classList.toggle('affordable', !owned && g.b >= upgrade.cost);
+        });
+
+        if(document.getElementById('modal').style.display === 'flex') {
+            document.getElementById('st-total').textContent = fmt(g.te);
+            document.getElementById('st-clicks').textContent = g.cl;
+            document.getElementById('st-level').textContent = g.lvl;
+            document.getElementById('st-stars').textContent = g.stars;
+            document.getElementById('st-bonus').textContent = `+${g.pr*25}%`;
+            document.getElementById('st-bill').textContent = g.bd > 0 ? `$${fmt(g.bd)}` : 'Clear';
+            document.getElementById('st-boost').textContent = g.ab ? `${Math.ceil(g.abd)}s remaining` : 'Offline';
+            const prestigeBtn = document.getElementById('prestige-btn');
+            const canPrestige = g.b >= 1000000;
+            prestigeBtn.disabled = !canPrestige;
+            prestigeBtn.textContent = canPrestige ? 'PRESTIGE FOR +25%' : 'PRESTIGE LOCKED (NEED $1M)';
+        }
+    }
+
+    function create() {
+        const sc = document.getElementById('assets-container');
+        sc.innerHTML = `
+            <div class="card" id="res-card" onclick="buyRes()">
+                <div class="card-head"><div class="icon-box" style="border-bottom:4px solid #4caf50">🧪</div>
+                <div class="info"><div class="name">OVERCLOCKING</div><div class="lvl" id="res-lvl">Lvl 0</div></div>
+                <div class="inc"><div>+15%</div><div style="font-size:10px;color:#999">global</div></div></div>
+                <div class="progress-box"><div class="bar" style="background:#4caf50;width:100%"></div><div class="cost-text" id="res-cost">Cost: 1,000</div></div>
+            </div>
+            <div class="card" id="click-card" onclick="buyClick()">
+                <div class="card-head"><div class="icon-box" style="border-bottom:4px solid #ffeb3b">⚡</div>
+                <div class="info"><div class="name">QUANTUM TAPPING</div><div class="lvl" id="click-lvl">Lvl 0</div></div>
+                <div class="inc"><div id="click-power">+$1.00</div><div style="font-size:10px;color:#999">per tap</div></div></div>
+                <div class="progress-box"><div class="bar" style="background:#ffeb3b;width:100%"></div><div class="cost-text" id="click-cost">Cost: 50</div></div>
+            </div>
+        `;
+        ASSETS.forEach(a => {
+            const c = document.createElement('div'); c.className = 'card'; c.id = `card-${a.id}`; c.onclick = () => buy(a.id);
+            c.innerHTML = `<div class="card-head"><div class="icon-box" style="border-bottom:4px solid ${a.col}">${a.i}</div>
+                <div class="info"><div class="name">${a.n}</div><div class="lvl" id="lvl-${a.id}">x0</div></div>
+                <div class="inc"><div id="inc-${a.id}">0.00</div><div style="font-size:10px;color:#999">cycle</div></div></div>
+                <div class="progress-box"><div class="bar" id="bar-${a.id}"></div><div class="cost-text" id="cost-${a.id}">Cost: ${a.c}</div></div>`;
+            sc.appendChild(c);
+        });
+    }
+
+    function buyClick() {
+        const cost = getClickCost();
+        if(g.b >= cost) {
+            g.b -= cost; g.clvl++;
+            play(700, 0.2, 'triangle'); update();
+        }
+    }
+
+    function buy(id) {
+        const c = cost(id);
+        if(g.b >= c) {
+            g.b -= c; g.as[id].l++;
+            play(600, 0.2, 'triangle'); update();
+        }
+    }
+
+    function buyRes() {
+        const c = 1000 * Math.pow(6, g.res);
+        if(g.b >= c) {
+            g.b -= c; g.res++;
+            play(1000, 0.4, 'sine'); float(window.innerWidth/2, window.innerHeight/2, "OVERCLOCKED!", "#4caf50"); update();
+        }
+    }
+
+    function surge() {
+        if(!g.sa && g.sc <= 0) {
+            g.sa = true; g.sd = 12; g.sc = 60;
+            document.body.classList.add('surge'); play(800, 0.5, 'square');
+            const rain = () => { if(!g.sa) return; particle(Math.random()*window.innerWidth, -20); setTimeout(rain, 100); }; rain();
+        }
+    }
+
+    function prestige() {
+        if(g.b >= 1000000 && confirm("RESET ALL FOR +25% BONUS?")){
+            g.pr++;
+            resetRunState();
+            create(); update(); toggleStats(false); play(200,0.8,'square',0.3);
+        }
+    }
+
+    function hardReset() {
+        const confirmed = confirm("Delete this run and start from zero?");
+        if (!confirmed) return;
+        localStorage.removeItem('cryptoTycoonSaveProMax');
+        g = { 
+            b: 0, te: 0, cl: 0, pr: 0, res: 0, as: {}, 
+            sa: false, sd: 0, sc: 0, ach: [],
+            lvl: 1, lte: 0,
+            stars: 0,
+            pwr: {},
+            ab: false, abd: 0,
+            clvl: 0,
+            bt: 300,
+            be: 0,
+            bd: 0,
+            bo: 0,
+            ut: 0
+        };
+        ASSETS.forEach(a => g.as[a.id] = { l: 0, p: 0 });
+        POWER_UPGRADES.forEach(p => g.pwr[p.id] = false);
+        lastBillState = -1;
+        create();
+        update();
+        toggleStats(false);
+        play(140, 0.8, 'sawtooth', 0.2);
+    }
+
+    function toggleStats(s) { document.getElementById('modal').style.display = s ? 'flex' : 'none'; if(s) update(); }
+
+    function mine(e) {
+        if(g.ut >= 3600) {
+            float(window.innerWidth/2, window.innerHeight/2, "⚡ POWER CUT! PAY BILL ⚡", "#ff4444", 2000);
+            play(100, 0.3, 'sawtooth', 0.1);
+            return;
+        }
+        const r = document.getElementById('balance').getBoundingClientRect();
+        const x = e.clientX || (r.left + r.width / 2);
+        const y = e.clientY || r.top;
+        
+        const crit = Math.random() < 0.12; 
+        const pwr = getClickPower() * (crit ? 6 : 1);
+        
+        addEarnings(pwr);
+        g.cl++;
+        
+        if(crit) { 
+            float(x, y, `CRIT! +$${fmt(pwr)}`, '#ff4444', 1200); 
+            play(800, 0.2, 'square', 0.05); 
+            if(g.settings.haptic && navigator.vibrate) navigator.vibrate([50, 30, 50]);
+        } else { 
+            float(x, y, `+$${fmt(pwr)}`, '#4caf50', 600); // Faster duration for taps (600ms)
+            play(400+Math.random()*200, 0.1, 'sine', 0.025); 
+            if(g.settings.haptic && navigator.vibrate) navigator.vibrate(10);
+        }
+        
+        for(let i=0; i<6; i++) particle(x, y);
+        update();
+    }
+
+    function addEarnings(n) {
+        if(g.ut >= 3600) return; // Forced stop
+        g.b += n;
+        g.te += n;
+        g.lte += n;
+        g.be += n; // Track current window
+        const req = LEVELS[g.lvl-1].req;
+        if(g.lte >= req) {
+            if(g.lvl >= LEVELS.length) {
+                completeStarRun();
+                return;
+            }
+            g.lvl++;
+            g.lte = 0;
+            play(1200, 0.8, 'sine', 0.3);
+            float(window.innerWidth/2, window.innerHeight/2, `LEVEL ${g.lvl} UNLOCKED!`, 'var(--accent)');
+        }
+    }
+
+    function payBill() {
+        if(g.bd <= 0) return;
+        const payment = Math.min(g.b, g.bd);
+        if (payment <= 0) {
+            float(window.innerWidth/2, window.innerHeight/2, "NOT ENOUGH CASH", "#ff4444", 1200);
+            return;
+        }
+        g.b -= payment;
+        g.bd -= payment;
+        if (g.bd <= 0.0001) {
+            g.bd = 0;
+            g.bo = 0;
+            g.ut = 0;
+        }
+        play(200, 0.5, 'sine', 0.3);
+        float(window.innerWidth/2, window.innerHeight/2, `BILL PAID: -$${fmt(payment)}`, "#ff4444", 2000);
+        update();
+    }
+
+    function saveGame() { 
+        g.lt = Date.now();
+        localStorage.setItem('cryptoTycoonSaveProMax', JSON.stringify(g)); 
+    }
+    function loadGame() {
+        const s = localStorage.getItem('cryptoTycoonSaveProMax');
+        if(s) { 
+            const l = JSON.parse(s); 
+            if(l.b !== undefined) g.b = l.b;
+            if(l.te !== undefined) g.te = l.te;
+            if(l.cl !== undefined) g.cl = l.cl;
+            if(l.pr !== undefined) g.pr = l.pr;
+            if(l.res !== undefined) g.res = l.res;
+            if(l.clvl !== undefined) g.clvl = l.clvl;
+            if(l.lvl !== undefined) g.lvl = l.lvl;
+            if(l.lte !== undefined) g.lte = l.lte;
+            if(l.stars !== undefined) g.stars = l.stars;
+            if(l.pwr) {
+                POWER_UPGRADES.forEach(p => {
+                    g.pwr[p.id] = !!l.pwr[p.id];
+                });
+            }
+            if(l.bt !== undefined) g.bt = l.bt;
+            if(l.be !== undefined) g.be = l.be;
+            if(l.bd !== undefined) g.bd = l.bd;
+            if(l.bo !== undefined) g.bo = l.bo;
+            if(l.ut !== undefined) g.ut = l.ut;
+            if(l.lt !== undefined) g.lt = l.lt;
+            if(l.user !== undefined) g.user = l.user;
+            if(l.nickname !== undefined) g.nickname = l.nickname;
+            if(l.usdt !== undefined) g.usdt = l.usdt;
+            if(l.settings) g.settings = { ...g.settings, ...l.settings };
+            if(l.shop) g.shop = { ...g.shop, ...l.shop };
+            if(l.ach) g.ach = l.ach;
+            if(l.as) {
+                ASSETS.forEach(a => {
+                    if(l.as[a.id]) {
+                        g.as[a.id].l = l.as[a.id].l || 0;
+                        g.as[a.id].p = l.as[a.id].p || 0;
+                    }
+                });
+            }
+
+            // Calculate Offline Earnings
+            const now = Date.now();
+            const diff = (now - g.lt) / 1000; // seconds
+            if(diff > 30) { // Only if away for more than 30s
+                let offlineEarnings = 0;
+                ASSETS.forEach(a => {
+                    if(g.as[a.id].l > 0) {
+                        const cpsVal = inc(a.id) / (a.t / 1000);
+                        offlineEarnings += cpsVal * diff;
+                    }
+                });
+
+                if(offlineEarnings > 0) {
+                    // Cap offline earnings if needed? Maybe just apply.
+                    // Also account for bills if you want, but maybe offline is "safe"
+                    // Or apply bills based on offline earnings too?
+                    const billAmt = offlineEarnings * getBillRate();
+                    g.bd += billAmt;
+                    g.bo += billAmt;
+                    
+                    addEarnings(offlineEarnings);
+                    
+                    setTimeout(() => {
+                        const h = Math.floor(diff / 3600);
+                        const m = Math.floor((diff % 3600) / 60);
+                        let timeStr = h > 0 ? `${h}h ${m}m` : `${m}m`;
+                        if(h === 0 && m === 0) timeStr = `${Math.floor(diff)}s`;
+                        
+                        const msg = `WELCOME BACK!\n\nYou were away for ${timeStr}\n\nOff-line Earnings: +$${fmt(offlineEarnings)}\nNew Bills: -$${fmt(billAmt)}`;
+                        alert(msg);
+                    }, 500);
+                }
+            }
+        }
+    }
+
+    function watchAd() {
+        if(g.ab) return;
+        const adModal = document.createElement('div');
+        adModal.style.cssText = `position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.95);backdrop-filter:blur(10px);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;padding:20px;text-align:center;`;
+        
+        const faucetLinks = [
+            { n: 'LitePick', u: 'https://litepick.io/?ref=pokekauw', c: '#bebebe' },
+            { n: 'BNBPick', u: 'https://bnbpick.io/?ref=pokekauw', c: '#f3ba2f' },
+            { n: 'PolPick', u: 'https://polpick.io/?ref=pokekauw', c: '#8247e5' },
+            { n: 'DogePick', u: 'https://dogepick.io/?ref=pokekauw', c: '#c2a633' },
+            { n: 'SolPick', u: 'https://solpick.io/?ref=pokekauw', c: '#14f195' },
+            { n: 'TronPick', u: 'https://tronpick.io/?ref=pokekauw', c: '#ff0013' },
+            { n: 'TonPick', u: 'https://tonpick.game/?ref=pokekauw', c: '#0088cc' },
+            { n: 'SuiPick', u: 'https://suipick.io/?ref=pokekauw', c: '#6fbcf0' },
+            { n: 'FreeBitcoin', u: 'https://freebtcco.in/?ref=-v_57Bk6N5', c: '#f7931a' },
+            { n: 'FreeTron', u: 'https://freetron.in/?ref=qdUqFEkZg-', c: '#ff0013' },
+            { n: 'FreeXRP', u: 'https://freexrp.in/?ref=Sqga1Bfrn9', c: '#ffffff' },
+            { n: 'FreeBNB', u: 'https://freebnb.in/?ref=QdgXmuHvg-', c: '#f3ba2f' },
+            { n: 'FreeToncoin', u: 'https://freetoncoin.in/?ref=P-MlOr4kY_', c: '#0088cc' },
+            { n: 'USDPick', u: 'https://usdpick.io/?ref=xfR9fysYO0', c: '#4caf50' },
+            { n: 'FreeArb', u: 'https://freearb.in/?ref=DNpLA8oQs4', c: '#28a0f0' },
+            { n: 'FreeShib', u: 'https://freeshib.in/?ref=EsnqAQRXkl', c: '#ffa409' },
+            { n: 'FreeSui', u: 'https://freesui.in/?ref=B3lDFMljsk', c: '#6fbcf0' },
+            { n: 'FreeBCH', u: 'https://freebch.in/?ref=xg6_hd41nE', c: '#8bc34a' }
+        ];
+
+        const trustpilotLinks = [
+            'https://www.trustpilot.com/review/litepick.io',
+            'https://www.trustpilot.com/review/solpick.io',
+            'https://www.trustpilot.com/review/suipick.io',
+            'https://www.trustpilot.com/review/usdpick.io'
+        ];
+
+        adModal.innerHTML = `
+            <div class="page-card" style="width:100%; max-width:400px; max-height:85vh; background:var(--card); border:1px solid var(--accent); padding:20px; border-radius:20px; animation: surgePop 0.4s ease-out; box-shadow: 0 0 50px rgba(255,215,0,0.15); display:flex; flex-direction:column;">
+                <h2 style="color:var(--accent); margin-bottom:10px; font-size:24px;">FREE CRYPTO HUB! 🚀</h2>
+                <p style="font-size:12px; line-height:1.4; margin-bottom:15px; color:rgba(255,255,255,0.9);">
+                    Claim free crypto every hour! High Trustpilot scores across all sites. Use the links below for your bonuses.
+                </p>
+                
+                <button onclick="window.open('${trustpilotLinks[Math.floor(Math.random()*trustpilotLinks.length)]}', '_blank')" style="background:#00b67a; color:#fff; border:none; padding:8px; border-radius:8px; font-size:12px; font-weight:700; margin-bottom:15px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;">
+                    <span style="font-size:16px;">★</span> Check Trustpilot Reviews
+                </button>
+
+                <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:8px; overflow-y:auto; flex:1; padding-right:5px; margin-bottom:15px; text-align:left;">
+                    ${faucetLinks.map(l => `
+                        <a href="${l.u}" target="_blank" style="color:${l.c}; text-decoration:none; font-size:11px; background:rgba(255,255,255,0.05); padding:8px; border-radius:8px; border:1px solid ${l.c}44; display:flex; align-items:center; gap:6px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                            <span style="flex-shrink:0;">💰</span> ${l.n}
+                        </a>
+                    `).join('')}
+                </div>
+
+                <button id="claim-ad-boost" disabled style="width:100%; padding:14px; background:rgba(255,215,0,0.2); color:rgba(0,0,0,0.4); border:none; border-radius:12px; font-weight:900; cursor:not-allowed; text-transform:uppercase; letter-spacing:1px; font-size:14px; transition:0.3s;">Wait 4s...</button>
+                <div style="margin-top:12px; font-size:10px; color:rgba(255,255,255,0.4); cursor:pointer;" onclick="this.parentElement.parentElement.remove()">Dismiss</div>
+            </div>
+        `;
+        document.body.appendChild(adModal);
+
+        const claimBtn = document.getElementById('claim-ad-boost');
+        let countdown = 4;
+        const btnTimer = setInterval(() => {
+            countdown--;
+            if(countdown > 0) {
+                claimBtn.textContent = `Wait ${countdown}s...`;
+            } else {
+                clearInterval(btnTimer);
+                claimBtn.disabled = false;
+                claimBtn.style.background = 'var(--accent)';
+                claimBtn.style.color = '#000';
+                claimBtn.style.cursor = 'pointer';
+                claimBtn.textContent = 'Claim 2X Boost';
+            }
+        }, 1000);
+
+        claimBtn.onclick = () => {
+            if(claimBtn.disabled) return;
+            adModal.remove();
+            g.ab = true;
+            g.abd = 300; // 5 MINUTES (300 seconds)
+            float(window.innerWidth/2, window.innerHeight/2, "5 MIN 2X BOOST ACTIVE!", "var(--success)");
+            play(1000, 0.5, 'sine', 0.2);
+            update();
+        };
+    }
+
+    let lastBillState = -1; // To optimize UI updates
+
+    let last = Date.now();
+    function loop() {
+        const now = Date.now(); const dt = now - last; last = now;
+        const b = document.getElementById('surge-btn'); 
+        const t = document.getElementById('surge-timer');
+        if(g.sa) { 
+            g.sd -= dt/1000; 
+            if(g.sd <= 0) { 
+                g.sa = false; 
+                document.body.classList.remove('surge'); 
+            } 
+            b.classList.add('ready');
+            t.textContent = Math.ceil(g.sd)+'s';
+        } else {
+            if(g.sc > 0) g.sc -= dt/1000;
+            if(g.sc <= 0) { 
+                b.classList.add('ready'); 
+                t.textContent = 'READY'; 
+            } else { 
+                b.classList.remove('ready'); 
+                t.textContent = Math.ceil(g.sc)+'s'; 
+            }
+        }
+        
+        // Bill logic (5-min windows accumulation)
+        g.bt -= dt/1000;
+        if(g.bt <= 0) {
+            const billAmt = g.be * getBillRate();
+            if(billAmt > 0) {
+                g.bd += billAmt;
+                g.bo += billAmt;
+                g.be = 0;
+                play(400, 0.5, 'sawtooth', 0.2);
+                float(window.innerWidth/2, window.innerHeight/2, "NEW BILL ARRIVED!", "#ffd700", 2000);
+            }
+            g.bt = 300;
+        }
+
+        const billBtn = document.getElementById('bill-btn');
+        if(g.bd > 0) {
+            g.ut += dt/1000; // Increment unpaid time
+            billBtn.classList.add('visible');
+            const rem = 3600 - g.ut;
+            
+            let currentState;
+            if (rem <= 0) currentState = 2;
+            else if (rem < 600) currentState = 1;
+            else currentState = 0;
+
+            // ONLY UPDATE UI IF STATE CHANGES (OR TIME CHANGES FOR TIMER)
+            if (lastBillState !== currentState || (currentState === 1 && Math.ceil(rem/60) !== lastBillState)) {
+                if(rem <= 0) {
+                    billBtn.innerHTML = `<span style="font-size: 24px;">🚫</span><span class="ad-txt">POWER CUT!</span>`;
+                    billBtn.style.background = 'linear-gradient(135deg, #ff0000, #990000)';
+                    billBtn.classList.add('vibrate');
+                    lastBillState = 2;
+                } else if(rem < 600) { 
+                    const mins = Math.ceil(rem/60);
+                    billBtn.innerHTML = `<span style="font-size: 24px;">⚠️</span><span class="ad-txt">${mins}m LEFT</span>`;
+                    billBtn.style.background = 'linear-gradient(135deg, #ff4444, #ffd700)';
+                    lastBillState = mins; // Use minutes for fine-grained update
+                } else {
+                    billBtn.innerHTML = `<span style="font-size: 24px;">🔌</span><span class="ad-txt">PAY BILL</span>`;
+                    billBtn.style.background = 'linear-gradient(135deg, #ffd700, #ff8800)';
+                    lastBillState = 0;
+                }
+            }
+        } else {
+            billBtn.classList.remove('visible', 'vibrate');
+            g.ut = 0;
+            lastBillState = -1;
+        }
+
+        if(g.ab) {
+            g.abd -= dt/1000;
+            if(g.abd <= 0) {
+                g.ab = false;
+                float(window.innerWidth/2, window.innerHeight/2, "BOOST EXPIRED", "#ff4444");
+            }
+        }
+        ASSETS.forEach(a => {
+            const s = g.as[a.id];
+            if(s && s.l > 0) {
+                s.p += (dt / a.t) * 100;
+                if(s.p >= 100) {
+                    const cycles = Math.floor(s.p / 100); 
+                    s.p %= 100;
+                    const earnings = inc(a.id) * cycles;
+                    addEarnings(earnings);
+                }
+                const bar = document.getElementById(`bar-${a.id}`); 
+                if(bar) bar.style.width = s.p + '%';
+            }
+        });
+        update(); requestAnimationFrame(loop);
+    }
+
+    window.onload = () => {
+        loadGame();
+
+        // Loading screen sequence
+        setTimeout(() => {
+            const loading = document.getElementById('loading-screen');
+            loading.style.opacity = '0';
+            setTimeout(() => {
+                loading.style.display = 'none';
+                
+                // Show login if no user
+                if (!g.user) {
+                    document.getElementById('login-overlay').style.display = 'flex';
+                }
+            }, 500);
+        }, 1500);
+
+        // Prevent long-press context menu for better mobile game feel
+        window.oncontextmenu = function(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            return false;
+        };
+
+        // Save when user switches tabs or backgrounds the app
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'hidden') {
+                saveGame();
+            }
+        });
+
+        create();
+        createPowerStore();
+        switchTab('mining');
+        update();
+        setInterval(saveGame, 10000);
+        requestAnimationFrame(loop);
+    };
+</script>
+</body>
+</html>
